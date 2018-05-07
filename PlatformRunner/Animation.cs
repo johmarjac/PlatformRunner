@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
 namespace PlatformRunner
@@ -18,6 +19,8 @@ namespace PlatformRunner
         public double LetzteZeit = 0;
 
         public string Name { get; }
+
+        public SpriteEffects Effects;
 
         public Animation(string name)
         {

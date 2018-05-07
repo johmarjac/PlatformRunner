@@ -6,6 +6,7 @@ using MonoGame.Extended.Tiled;
 using MonoGame.Extended.Tiled.Graphics;
 using MonoGame.Extended.ViewportAdapters;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PlatformRunner
@@ -20,6 +21,8 @@ namespace PlatformRunner
         TiledMapRenderer renderer;
         Camera2D camera;
         Spieler spieler;
+
+        List<Gegner> Gegner;
 
         public GameMain()
         {
@@ -42,6 +45,7 @@ namespace PlatformRunner
             camera.ZoomOut(0.5f);
 
             spieler = new Spieler();
+            Gegner = new List<PlatformRunner.Gegner>();
             base.Initialize();
         }
 
@@ -55,10 +59,20 @@ namespace PlatformRunner
 
            spieler.Animationen.Play("Stehen");
             spieler.Explosions.Play("Explosion");
+
+            var zombie = new Zombie();
+            zombie.LoadContent(Content);
+
+            Gegner.Add(zombie);
         }
         
         protected override void UnloadContent()
         {
+
+            var zombie = new Zombie();
+            
+
+
         }
 
         protected override void Update(GameTime gameTime)
@@ -109,13 +123,19 @@ namespace PlatformRunner
             if (keybd.IsKeyDown(Keys.K))
                 spieler.Animationen.Play("Schlagen");
 
+            if (keybd.IsKeyDown(Keys.J))
+                spieler.Animationen.Play("Morden");
+
             CheckCollision();
 
             camera.LookAt(spieler.Position);
 
             spieler.Velocity += new Vector2(0, Spieler.Geschwindigkeit);
             spieler.Position += spieler.Velocity;
-            
+
+            foreach (var gegner in Gegner)
+                gegner.Update();
+
             base.Update(gameTime);
         }
 
@@ -131,22 +151,23 @@ namespace PlatformRunner
             if (collisionLayer.Objects.Length == 0 || !collisionLayer.Objects.Any(t => t is TiledMapPolylineObject))
                 throw new Exception("Keine Polyline Objects...");
 
-            var pointsObject = collisionLayer.Objects
-                .Where(t => t is TiledMapPolylineObject)
-                .FirstOrDefault() as TiledMapPolylineObject;
-
-            for(int i = 0; i < pointsObject.Points.Length - 1; i++)
+            foreach(var obj in collisionLayer.Objects.Where(t => t is TiledMapPolylineObject))
             {
-                var currentPoint = pointsObject.Points[i] + pointsObject.Position;
-                var nextPoint = pointsObject.Points[i + 1] + pointsObject.Position;
+                var pointsObject = (TiledMapPolylineObject)obj;
 
-                if((spieler.Position.X + (spieler.Animationen.Aktuell.Breite / 2)) >= currentPoint.X && (spieler.Position.X + (spieler.Animationen.Aktuell.Breite / 2)) < nextPoint.X)
+                for (int i = 0; i < pointsObject.Points.Length - 1; i++)
                 {
-                    float linieY = SolveLinearEquation(currentPoint, nextPoint, (spieler.Position.X + (spieler.Animationen.Aktuell.Breite / 2)));
-                    if((spieler.Position.Y + spieler.Animationen.Aktuell.Höhe) > linieY)
+                    var currentPoint = pointsObject.Points[i] + pointsObject.Position;
+                    var nextPoint = pointsObject.Points[i + 1] + pointsObject.Position;
+
+                    if ((spieler.Position.X + (spieler.Animationen.Aktuell.Breite / 2)) >= currentPoint.X && (spieler.Position.X + (spieler.Animationen.Aktuell.Breite / 2)) < nextPoint.X)
                     {
-                        spieler.Position = new Vector2(spieler.Position.X, linieY - spieler.Animationen.Aktuell.Höhe);
-                        spieler.Velocity = new Vector2(0, Spieler.Geschwindigkeit);
+                        float linieY = SolveLinearEquation(currentPoint, nextPoint, (spieler.Position.X + (spieler.Animationen.Aktuell.Breite / 2)));
+                        if ((spieler.Position.Y + spieler.Animationen.Aktuell.Höhe) > linieY && (spieler.Position.Y + spieler.Animationen.Aktuell.Höhe) < (linieY + testlevel.TileHeight))
+                        {
+                            spieler.Position = new Vector2(spieler.Position.X, linieY - spieler.Animationen.Aktuell.Höhe);
+                            spieler.Velocity = new Vector2(0, Spieler.Geschwindigkeit);
+                        }
                     }
                 }
             }

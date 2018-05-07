@@ -36,5 +36,20 @@ namespace PlatformRunner
         {
             Aktuell?.Update(gameTime);
         }
+
+        public void Draw(GameTime gameTime)
+        {
+            //var frameIndex = Aktuell.Frames[Aktuell.AktuellerIndex];
+            //var rectangle = Aktuell.GetFrame(frameIndex);
+
+            //batch.Draw(Textur,
+            //    new Rectangle(Position.ToPoint(), new Point(Aktuell.Breite, Aktuell.Höhe)),
+            //    rectangle, Color.White, 0f, Vector2.Zero, Aktuell.Effects, 0f);
+
+
+
+            //var frameIndex1 = Explosions.Aktuell.Frames[Explosions.Aktuell.AktuellerIndex];
+            //var rectangle1 = Explosions.Aktuell.GetFrame(frameIndex);
+        }
     }
 }

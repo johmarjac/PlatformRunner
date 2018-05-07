@@ -72,6 +72,13 @@ namespace PlatformRunner
 
             Animationen.AddAnimation(slide);
 
+            var morden = new Animation("Morden");
+            morden.Breite = 80;
+            morden.Höhe = 110;
+            morden.AddFrame(21);
+
+            Animationen.AddAnimation(morden);
+
             var explosion = new Animation("Explosion");
             explosion.Breite = 320;
             explosion.Höhe = 332;
