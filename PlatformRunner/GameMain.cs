@@ -134,7 +134,7 @@ namespace PlatformRunner
             spieler.Position += spieler.Velocity;
 
             foreach (var gegner in Gegner)
-                gegner.Update();
+                gegner.Update(gameTime);
 
             base.Update(gameTime);
         }
