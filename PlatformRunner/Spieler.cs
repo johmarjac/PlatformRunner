@@ -10,6 +10,10 @@ namespace PlatformRunner
         public Animations Animationen;
         public Animations Explosions;
         public SpriteEffects Effects;
+        public SpriteBatch Batch;
+
+        public Texture2D HerzTexture;
+        public int Leben;
 
         public const float Geschwindigkeit = 0.5f;
 
@@ -19,6 +23,7 @@ namespace PlatformRunner
             Velocity = Vector2.Zero;
             Animationen = new Animations();
             Explosions = new Animations();
+            Leben = 3;
 
             var stehanimation = new Animation("Stehen");
             stehanimation.Breite = 80;
@@ -103,6 +108,9 @@ namespace PlatformRunner
 
         public void Draw(SpriteBatch batch, GameTime gameTime)
         {
+            if (Batch == null)
+                Batch = new SpriteBatch(batch.GraphicsDevice);
+
             var frameIndex = Animationen.Aktuell.Frames[Animationen.Aktuell.AktuellerIndex];
             var rectangle = Animationen.Aktuell.GetFrame(frameIndex);
 
@@ -115,9 +123,16 @@ namespace PlatformRunner
             var frameIndex1 = Explosions.Aktuell.Frames[Explosions.Aktuell.AktuellerIndex];
             var rectangle1 = Explosions.Aktuell.GetFrame(frameIndex);
 
+            Batch.Begin();
+            for (int i = 0; i < Leben; i++)
+            {
+                Batch.Draw(HerzTexture, new Vector2(19 * i, 20), Color.White);
+            }
+            Batch.End();
+
             //batch.Draw(Explosions.Textur,
-                //new Rectangle(Position.ToPoint(), new Point(Explosions.Aktuell.Breite, Explosions.Aktuell.Höhe)),
-                //rectangle, Color.White, 0f, Vector2.Zero, Effects, 0f);
+            //new Rectangle(Position.ToPoint(), new Point(Explosions.Aktuell.Breite, Explosions.Aktuell.Höhe)),
+            //rectangle, Color.White, 0f, Vector2.Zero, Effects, 0f);
         }
     }
 }

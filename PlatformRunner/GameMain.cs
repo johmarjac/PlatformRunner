@@ -22,7 +22,12 @@ namespace PlatformRunner
         Camera2D camera;
         Spieler spieler;
 
+        int GegnerAnzahl = 25;
+
+        public static Random Zufall = new Random();
         List<Gegner> Gegner;
+
+        KeyboardState oldState;
 
         public GameMain()
         {
@@ -32,8 +37,9 @@ namespace PlatformRunner
 
             graphics.PreferredBackBufferWidth = 1024;
             graphics.PreferredBackBufferHeight = 768;
-
             graphics.IsFullScreen = false;
+
+            
         }
 
         protected override void Initialize()
@@ -54,32 +60,35 @@ namespace PlatformRunner
             testlevel = Content.Load<TiledMap>("maps/testlevel");
             spieler.Animationen.Textur = Content.Load<Texture2D>("Assets/joey");
             spieler.Explosions.Textur = Content.Load<Texture2D>("Assets/explosion");
+            spieler.HerzTexture = Content.Load<Texture2D>("Assets/herz");
             font = Content.Load<SpriteFont>("Fonts/Default");
 
 
            spieler.Animationen.Play("Stehen");
             spieler.Explosions.Play("Explosion");
 
-            var zombie = new Zombie();
-            zombie.LoadContent(Content);
+            for(int i = 0; i < GegnerAnzahl; i++)
+            {
+                var zombie = new Zombie();
+                zombie.LoadContent(Content);
 
-            Gegner.Add(zombie);
+                Gegner.Add(zombie);
+            }
         }
         
         protected override void UnloadContent()
         {
 
-            var zombie = new Zombie();
             
 
 
         }
+        
 
         protected override void Update(GameTime gameTime)
         {
             var keybd = Keyboard.GetState();
-
-            
+                       
 
             if (keybd.IsKeyDown(Keys.A))
             {
@@ -103,7 +112,7 @@ namespace PlatformRunner
             if (keybd.IsKeyDown(Keys.L))
                 spieler.Animationen.Play("Treten");
 
-            if (keybd.IsKeyDown(Keys.W))
+            if (keybd.IsKeyDown(Keys.W) || keybd.IsKeyDown(Keys.Space))
             {
                 spieler.Move(new Vector2(0, -1f * gameTime.ElapsedGameTime.Milliseconds));
                 spieler.Animationen.Play("Springen");
@@ -132,10 +141,42 @@ namespace PlatformRunner
 
             spieler.Velocity += new Vector2(0, Spieler.Geschwindigkeit);
             spieler.Position += spieler.Velocity;
+            
 
             foreach (var gegner in Gegner)
                 gegner.Update(gameTime);
 
+            
+            for (int i = 0; i < Gegner.Count; i++)
+            {
+                var gegner = Gegner[i];
+                if ((gegner.Position - spieler.Position).Length() < 30)
+                {
+                    spieler.Leben -= 1;
+                    gegner.Position += new Vector2(50, gegner.Position.Y);
+                }
+
+                if (spieler.Leben <= 0)
+                    Exit();
+
+                if ((gegner.Position - spieler.Position).Length() < 100 && oldState.IsKeyDown(Keys.K) && keybd.IsKeyUp(Keys.K))
+                    gegner.Leben -= 2;
+
+                if ((gegner.Position - spieler.Position).Length() < 70 && oldState.IsKeyDown(Keys.L) && keybd.IsKeyUp(Keys.L))
+                {
+                    gegner.Leben -= 3;
+                    if(spieler.Effects == SpriteEffects.None)
+                    {
+                        //gegner.Velocity = new Vector2(1.5f, 0);
+                    }
+                }
+
+                if (!gegner.IstAmLeben)
+                    Gegner.Remove(gegner);
+            }
+
+
+            oldState = keybd;
             base.Update(gameTime);
         }
 
@@ -169,6 +210,19 @@ namespace PlatformRunner
                             spieler.Velocity = new Vector2(0, Spieler.Geschwindigkeit);
                         }
                     }
+
+                    foreach(var gegner in Gegner)
+                    {
+                        if ((gegner.Position.X + (gegner.Animationen.Aktuell.Breite / 2)) >= currentPoint.X && (gegner.Position.X + (gegner.Animationen.Aktuell.Breite / 2)) < nextPoint.X)
+                        {
+                            float linieY = SolveLinearEquation(currentPoint, nextPoint, (gegner.Position.X + (gegner.Animationen.Aktuell.Breite / 2)));
+                            if ((gegner.Position.Y + gegner.Animationen.Aktuell.Höhe) > linieY && (gegner.Position.Y + gegner.Animationen.Aktuell.Höhe) < (linieY + testlevel.TileHeight))
+                            {
+                                gegner.Position = new Vector2(gegner.Position.X, linieY - gegner.Animationen.Aktuell.Höhe);
+                                gegner.Velocity = new Vector2(gegner.Velocity.X, Spieler.Geschwindigkeit);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -194,11 +248,16 @@ namespace PlatformRunner
 
             batch.Begin(transformMatrix: viewMatrix);
             spieler.Draw(batch, gameTime);
+
+            foreach (var gegner in Gegner)
+                gegner.Draw(batch, gameTime);
             batch.End();
 
             batch.Begin();
             batch.DrawString(font, $"Position: {spieler.Position.ToString()}", Vector2.Zero, Color.White);
             batch.End();
+
+            
 
             base.Draw(gameTime);
         }
