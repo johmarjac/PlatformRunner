@@ -22,6 +22,8 @@ namespace PlatformRunner
         Camera2D camera;
         Spieler spieler;
 
+        bool wirdGameOverBildGezeichnet = false;
+
         int GegnerAnzahl = 25;
 
         public static Random Zufall = new Random();
@@ -38,8 +40,6 @@ namespace PlatformRunner
             graphics.PreferredBackBufferWidth = 1024;
             graphics.PreferredBackBufferHeight = 768;
             graphics.IsFullScreen = false;
-
-            
         }
 
         protected override void Initialize()
@@ -54,7 +54,7 @@ namespace PlatformRunner
             Gegner = new List<PlatformRunner.Gegner>();
             base.Initialize();
         }
-
+        // Das spiel ist toll!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         protected override void LoadContent()
         {
             testlevel = Content.Load<TiledMap>("maps/testlevel");
@@ -62,9 +62,8 @@ namespace PlatformRunner
             spieler.Explosions.Textur = Content.Load<Texture2D>("Assets/explosion");
             spieler.HerzTexture = Content.Load<Texture2D>("Assets/herz");
             font = Content.Load<SpriteFont>("Fonts/Default");
-
-
-           spieler.Animationen.Play("Stehen");
+            
+            spieler.Animationen.Play("Stehen");
             spieler.Explosions.Play("Explosion");
 
             for(int i = 0; i < GegnerAnzahl; i++)
@@ -78,10 +77,6 @@ namespace PlatformRunner
         
         protected override void UnloadContent()
         {
-
-            
-
-
         }
         
 
@@ -135,6 +130,9 @@ namespace PlatformRunner
             if (keybd.IsKeyDown(Keys.J))
                 spieler.Animationen.Play("Morden");
 
+            if (oldState.IsKeyDown(Keys.Escape) && keybd.IsKeyUp(Keys.Escape))
+                wirdGameOverBildGezeichnet = !wirdGameOverBildGezeichnet;
+
             CheckCollision();
 
             camera.LookAt(spieler.Position);
@@ -157,7 +155,10 @@ namespace PlatformRunner
                 }
 
                 if (spieler.Leben <= 0)
-                    Exit();
+                {
+                    wirdGameOverBildGezeichnet = !wirdGameOverBildGezeichnet;
+                    spieler.Leben = 3;
+                }
 
                 if ((gegner.Position - spieler.Position).Length() < 100 && oldState.IsKeyDown(Keys.K) && keybd.IsKeyUp(Keys.K))
                     gegner.Leben -= 2;
@@ -174,8 +175,7 @@ namespace PlatformRunner
                 if (!gegner.IstAmLeben)
                     Gegner.Remove(gegner);
             }
-
-
+            
             oldState = keybd;
             base.Update(gameTime);
         }
@@ -240,22 +240,33 @@ namespace PlatformRunner
 
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-            var groundLayer = testlevel.GetLayer("Ground");
-            var viewMatrix = camera.GetViewMatrix();
-            var projectionMatrix = Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, 0, -1);
+            if(!wirdGameOverBildGezeichnet)
+            {
+                var groundLayer = testlevel.GetLayer("Ground");
+                var viewMatrix = camera.GetViewMatrix();
+                var projectionMatrix = Matrix.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, 0, -1);
 
-            renderer.Draw(groundLayer, ref viewMatrix, ref projectionMatrix);
+                renderer.Draw(groundLayer, ref viewMatrix, ref projectionMatrix);
 
-            batch.Begin(transformMatrix: viewMatrix);
-            spieler.Draw(batch, gameTime);
+                batch.Begin(transformMatrix: viewMatrix);
+                spieler.Draw(batch, gameTime);
 
-            foreach (var gegner in Gegner)
-                gegner.Draw(batch, gameTime);
-            batch.End();
+                foreach (var gegner in Gegner)
+                    gegner.Draw(batch, gameTime);
+                batch.End();
 
-            batch.Begin();
-            batch.DrawString(font, $"Position: {spieler.Position.ToString()}", Vector2.Zero, Color.White);
-            batch.End();
+                batch.Begin();
+                batch.DrawString(font, $"Position: {spieler.Position.ToString()}", Vector2.Zero, Color.White);
+                batch.End();
+            }
+            else
+            {
+                batch.Begin();
+
+                batch.DrawString(font, "Game Over", Vector2.Zero, Color.Red, 0, Vector2.Zero, 5f, SpriteEffects.None, 0f);
+
+                batch.End();
+            }
 
             
 
